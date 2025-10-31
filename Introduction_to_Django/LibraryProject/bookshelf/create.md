@@ -1,1 +1,1 @@
-book = Book(title="1984", author="George Orwell", publication_year=1949) # outpus : <bound method Model.save of <Book: 1984>>
+Book.objects.create(title="Clean Code", author="Robert C. Martin", publication_year=2008) #Output: <Book: 1984>
