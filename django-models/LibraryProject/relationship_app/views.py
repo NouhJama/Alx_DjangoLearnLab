@@ -55,7 +55,7 @@ class member_view(View):
         return render(request, 'relationship_app/member_view.html')
     
 # view to add a new book
-@permission_required
+@permission_required('relationship_app.can_add_book')
 class add_book_view(View):
     def get(self, request):
         # Logic to display add book form
@@ -70,7 +70,7 @@ class add_book_view(View):
         return redirect('book-list')
     
 # view to delete a book
-@permission_required
+@permission_required('relationship_app.can_delete_book')
 class delete_book_view(View):
     def post(self, request, book_id):
         # Logic to handle book deletion
@@ -79,7 +79,7 @@ class delete_book_view(View):
         return redirect('book-list')
     
 # view to change a book
-@permission_required
+@permission_required('relationship_app.can_change_book')
 class change_book_view(View):
     def get(self, request, book_id):
         # Logic to display change book form
