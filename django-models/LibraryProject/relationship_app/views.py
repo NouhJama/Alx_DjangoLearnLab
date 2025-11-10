@@ -7,6 +7,7 @@ from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import permission_required
 
 # Create your views here.
 # Acces Control based on UserProfile role can be implemented here
@@ -52,3 +53,44 @@ class member_view(View):
     def get(self, request):
         # Logic for member view
         return render(request, 'relationship_app/member_view.html')
+    
+# view to add a new book
+@permission_required
+class add_book_view(View):
+    def get(self, request):
+        # Logic to display add book form
+        return render(request, 'relationship_app/add_book.html')
+    
+    def post(self, request):
+        # Logic to handle book addition
+        title = request.POST.get('title')
+        author_id = request.POST.get('author')
+        author = Author.objects.get(id=author_id)
+        Book.objects.create(title=title, author=author)
+        return redirect('book-list')
+    
+# view to delete a book
+@permission_required
+class delete_book_view(View):
+    def post(self, request, book_id):
+        # Logic to handle book deletion
+        book = Book.objects.get(id=book_id)
+        book.delete()
+        return redirect('book-list')
+    
+# view to change a book
+@permission_required
+class change_book_view(View):
+    def get(self, request, book_id):
+        # Logic to display change book form
+        book = Book.objects.get(id=book_id)
+        return render(request, 'relationship_app/change_book.html', {'book': book})
+    
+    def post(self, request, book_id):
+        # Logic to handle book change
+        book = Book.objects.get(id=book_id)
+        book.title = request.POST.get('title')
+        author_id = request.POST.get('author')
+        book.author = Author.objects.get(id=author_id)
+        book.save()
+        return redirect('book-list')

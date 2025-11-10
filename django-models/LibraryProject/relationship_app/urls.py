@@ -19,4 +19,10 @@ urlpatterns = [
     path('admin/', views.admin_view.as_view(), name='admin-view'),
     path('librarian/', views.librarian_view.as_view(), name='librarian-view'),
     path('member/', views.member_view.as_view(), name='member-view'),
+
+    # Define URL Patterns for Secured Views
+    path('books/add/', views.add_book_view.as_view(), name='add-book'),
+    path('books/delete/<int:book_id>/', views.delete_book_view.as_view(), name='delete-book'),
+    path('books/change/<int:book_id>/', views.change_book_view.as_view(), name='change-book'),
+
 ]
