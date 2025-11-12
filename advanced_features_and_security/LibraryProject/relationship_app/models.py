@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
+# This is an extention of the default User model.
+class CustomUser(AbstractUser):
+    # Additional fields added
+    date_of_birth = models.DateField(null=True, blank=True) 
+    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)   
 
 # Create your models here.
 class Author(models.Model):
@@ -53,8 +58,3 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
     
-# You can add additional fields and methods as needed for your application.
-class CustomUser(AbstractUser):
-    # Additional fields can be added here if needed
-    date_of_birth = models.DateField(null=True, blank=True) 
-    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)   
