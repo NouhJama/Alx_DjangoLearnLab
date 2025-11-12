@@ -21,8 +21,8 @@ urlpatterns = [
     path('member/', views.member_view.as_view(), name='member-view'),
 
     # Define URL Patterns for Secured Views
-    path('books/add_book/', views.add_book_view.as_view(), name='add_book'),
-    path('books/delete_book/<int:book_id>/', views.delete_book_view.as_view(), name='delete_book'),
-    path('books/edit_book/<int:book_id>/', views.change_book_view.as_view(), name='change_book'),
+    path('books/add_book/', views.add_book_view.as_view(), name='add-book'),
+    path('books/delete_book/<int:book_id>/', views.delete_book_view.as_view(), name='delete-book'),
+    path('books/edit_book/<int:book_id>/', views.change_book_view.as_view(), name='change-book'),
 
 ]
