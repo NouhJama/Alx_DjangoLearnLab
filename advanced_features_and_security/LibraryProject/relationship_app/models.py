@@ -56,5 +56,5 @@ class UserProfile(models.Model):
 # You can add additional fields and methods as needed for your application.
 class CustomUser(AbstractUser):
     # Additional fields can be added here if needed
-    date_of_birth = models.DateField(null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True) 
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)   
