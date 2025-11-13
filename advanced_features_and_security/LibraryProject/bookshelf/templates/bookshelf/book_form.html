@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ action }} Book - Library Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; box-sizing: border-box; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .permission-info { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #007bff; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="permission-info">
+            <p><strong>Required Permission:</strong> 
+                {% if action == 'Create' %}
+                    bookshelf.can_create
+                {% else %}
+                    bookshelf.can_edit
+                {% endif %}
+            </p>
+            <p>This form demonstrates permission-protected book {{ action|lower }} functionality.</p>
+        </div>
+
+        <h1>{{ action }} Book</h1>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" value="{{ book.title|default:'' }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="author">Author:</label>
+                <input type="text" id="author" name="author" value="{{ book.author|default:'' }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="publication_year">Publication Year:</label>
+                <input type="number" id="publication_year" name="publication_year" 
+                       value="{{ book.publication_year|default:'' }}" min="1000" max="2100" required>
+            </div>
+            
+            <div>
+                <input type="submit" value="{{ action }} Book" class="btn btn-primary">
+                <a href="{% url 'book_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

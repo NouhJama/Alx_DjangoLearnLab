@@ -1,12 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, User
 from django.conf import settings
-
-# This is an extention of the default User model.
-class CustomUser(AbstractUser):
-    # Additional fields added
-    date_of_birth = models.DateField(null=True, blank=True) 
-    profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True)   
 
 # Create your models here.
 class Author(models.Model):
@@ -44,9 +37,8 @@ class Librarian(models.Model):
         return self.name
 
 # Create UserProfile model to extend User model if needed
-
 class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='relationship_profile')
     # role: CharField with choices for 'Admin', 'Librarian', and 'Member'.
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
@@ -57,4 +49,3 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
-    

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book List - Library Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .book-item { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .actions { margin-top: 10px; }
+        .btn { padding: 5px 10px; margin-right: 5px; text-decoration: none; border-radius: 3px; }
+        .btn-create { background-color: #28a745; color: white; }
+        .btn-edit { background-color: #007bff; color: white; }
+        .btn-delete { background-color: #dc3545; color: white; }
+        .permission-info { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #007bff; margin: 20px 0; }
+        .messages { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Library Book Management System</h1>
+    
+    <div class="permission-info">
+        <h3>Permission-Based Access Control</h3>
+        <p><strong>Current User:</strong> {{ user.username }}</p>
+        <p><strong>Required Permission:</strong> bookshelf.can_view</p>
+        <p>This page demonstrates Django's permission system with custom permissions.</p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="actions">
+        {% if perms.bookshelf.can_create %}
+            <a href="{% url 'book_create' %}" class="btn btn-create">➕ Add New Book</a>
+        {% else %}
+            <span style="color: #666;">➕ Add New Book (No Permission)</span>
+        {% endif %}
+    </div>
+
+    <h2>Books in Library</h2>
+    
+    {% if books %}
+        {% for book in books %}
+            <div class="book-item">
+                <h3>{{ book.title }}</h3>
+                <p><strong>Author:</strong> {{ book.author }}</p>
+                <p><strong>Publication Year:</strong> {{ book.publication_year }}</p>
+                
+                <div class="actions">
+                    {% if perms.bookshelf.can_edit %}
+                        <a href="{% url 'book_edit' book.id %}" class="btn btn-edit">✏️ Edit</a>
+                    {% else %}
+                        <span style="color: #666;">✏️ Edit (No Permission)</span>
+                    {% endif %}
+                    
+                    {% if perms.bookshelf.can_delete %}
+                        <a href="{% url 'book_delete' book.id %}" class="btn btn-delete">🗑️ Delete</a>
+                    {% else %}
+                        <span style="color: #666;">🗑️ Delete (No Permission)</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No books available in the library.</p>
+    {% endif %}
+
+    <div style="margin-top: 30px; padding: 15px; background-color: #e9ecef; border-radius: 5px;">
+        <h4>Permission Testing Guide:</h4>
+        <ul>
+            <li><strong>can_view:</strong> Required to see this page and list books</li>
+            <li><strong>can_create:</strong> Required to see and use "Add New Book" button</li>
+            <li><strong>can_edit:</strong> Required to see and use "Edit" buttons</li>
+            <li><strong>can_delete:</strong> Required to see and use "Delete" buttons</li>
+        </ul>
+        <p>Test with different user groups to see how permissions affect UI elements!</p>
+    </div>
+</body>
+</html>
