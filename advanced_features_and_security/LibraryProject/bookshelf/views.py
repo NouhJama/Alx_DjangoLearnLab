@@ -31,7 +31,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 import logging
 from .models import Book
-from .forms import BookForm, BookSearchForm
+from .forms import ExampleFormForm, BookSearchForm
 
 # Configure logging for security events
 logger = logging.getLogger(__name__)
@@ -129,34 +129,26 @@ def book_create_view(request):
                 
                 # Log successful creation for audit trail
                 logger.info(f"User {request.user.username} created book: {book.title}")
-                
-                messages.success(request, 'Book created successfully!')
-                
-                # SECURITY: Use internal redirect only (prevent open redirects)
-                return redirect('book_list')
-                
-            except ValidationError as e:
-                # Handle model validation errors
-                logger.warning(f"Validation error in book creation: {str(e)}")
-                messages.error(request, "Invalid input data. Please check your entries.")
-                
-            except Exception as e:
-                # Log unexpected errors
-                logger.error(f"Unexpected error in book_create_view: {str(e)}")
-                messages.error(request, "An error occurred while creating the book.")
-        else:
-            # SECURITY: Form validation failed - display errors
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field.title()}: {error}")
-    else:
-        # GET request - create empty form
-        form = BookForm()
+            
+            messages.success(request, 'Book created successfully!')
+            
+            # SECURITY: Use internal redirect only (prevent open redirects)
+            return redirect('book_list')
+            
+        except ValidationError as e:
+            # Handle model validation errors
+            logger.warning(f"Validation error in book creation: {str(e)}")
+            messages.error(request, "Invalid input data. Please check your entries.")
+            
+        except Exception as e:
+            # Log unexpected errors
+            logger.error(f"Unexpected error in book_create_view: {str(e)}")
+            messages.error(request, "An error occurred while creating the book.")
     
     # Render form for GET requests or failed POST requests
     return render(request, 'bookshelf/book_form.html', {
-        'form': form,
         'action': 'Create',
+        'csrf_token': request.META.get('CSRF_COOKIE'),
     })
 
 @permission_required('bookshelf.can_edit', raise_exception=True)
