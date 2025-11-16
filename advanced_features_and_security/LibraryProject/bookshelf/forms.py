@@ -22,7 +22,7 @@ import re
 from .models import Book, CustomUser
 
 
-class BookForm(forms.ModelForm):
+class ExampleForm(forms.ModelForm):
     """
     Secure Book creation and editing form with comprehensive validation.
     
