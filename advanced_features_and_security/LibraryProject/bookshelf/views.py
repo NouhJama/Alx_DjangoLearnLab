@@ -31,6 +31,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 import logging
 from .models import Book
+from .forms import BookForm, BookSearchForm
 
 # Configure logging for security events
 logger = logging.getLogger(__name__)
@@ -96,12 +97,12 @@ def book_list_view(request):
 @require_http_methods(["GET", "POST"])  # Only allow GET and POST
 def book_create_view(request):
     """
-    SECURE VIEW: Create a new book with comprehensive security measures.
+    SECURE VIEW: Create a new book with comprehensive security measures using Django Forms.
     
     Security Measures:
     - Permission Check: Requires 'bookshelf.can_create' permission
     - CSRF Protection: Required CSRF token on POST requests
-    - Input Validation: Server-side validation of all inputs
+    - Input Validation: Django Form validation with custom security checks
     - XSS Prevention: Input sanitization and template escaping
     - SQL Injection Prevention: Django ORM with parameterized queries
     - HTTP Method Restriction: Only GET/POST allowed
@@ -118,79 +119,44 @@ def book_create_view(request):
         ValidationError: If input validation fails
     """
     if request.method == 'POST':
-        try:
-            # SECURITY: Input validation and sanitization
-            title = request.POST.get('title', '').strip()
-            author = request.POST.get('author', '').strip()
-            publication_year_str = request.POST.get('publication_year', '').strip()
-            
-            # Validate required fields
-            if not title:
-                messages.error(request, "Title is required.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            if not author:
-                messages.error(request, "Author is required.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            if not publication_year_str:
-                messages.error(request, "Publication year is required.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            # SECURITY: Validate title length (prevent excessively long inputs)
-            if len(title) > 200:
-                messages.error(request, "Title must be 200 characters or less.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            # SECURITY: Validate author length
-            if len(author) > 100:
-                messages.error(request, "Author name must be 100 characters or less.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            # SECURITY: Validate and sanitize publication year
+        # SECURITY: Use Django Form for comprehensive validation
+        form = BookForm(request.POST)
+        
+        if form.is_valid():
             try:
-                publication_year = int(publication_year_str)
-                if publication_year < 1000 or publication_year > 2100:
-                    messages.error(request, "Publication year must be between 1000 and 2100.")
-                    return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            except ValueError:
-                messages.error(request, "Publication year must be a valid number.")
-                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
-            
-            # SECURITY: Additional input sanitization (escape HTML entities)
-            title = escape(title)
-            author = escape(author)
-            
-            # SECURITY: Use Django ORM to prevent SQL injection
-            # ORM automatically parameterizes queries
-            book = Book.objects.create(
-                title=title,
-                author=author,
-                publication_year=publication_year
-            )
-            
-            # Log successful creation for audit trail
-            logger.info(f"User {request.user.username} created book: {book.title}")
-            
-            messages.success(request, 'Book created successfully!')
-            
-            # SECURITY: Use internal redirect only (prevent open redirects)
-            return redirect('book_list')
-            
-        except ValidationError as e:
-            # Handle model validation errors
-            logger.warning(f"Validation error in book creation: {str(e)}")
-            messages.error(request, "Invalid input data. Please check your entries.")
-            
-        except Exception as e:
-            # Log unexpected errors
-            logger.error(f"Unexpected error in book_create_view: {str(e)}")
-            messages.error(request, "An error occurred while creating the book.")
+                # SECURITY: Form handles all validation and sanitization
+                book = form.save()
+                
+                # Log successful creation for audit trail
+                logger.info(f"User {request.user.username} created book: {book.title}")
+                
+                messages.success(request, 'Book created successfully!')
+                
+                # SECURITY: Use internal redirect only (prevent open redirects)
+                return redirect('book_list')
+                
+            except ValidationError as e:
+                # Handle model validation errors
+                logger.warning(f"Validation error in book creation: {str(e)}")
+                messages.error(request, "Invalid input data. Please check your entries.")
+                
+            except Exception as e:
+                # Log unexpected errors
+                logger.error(f"Unexpected error in book_create_view: {str(e)}")
+                messages.error(request, "An error occurred while creating the book.")
+        else:
+            # SECURITY: Form validation failed - display errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.title()}: {error}")
+    else:
+        # GET request - create empty form
+        form = BookForm()
     
     # Render form for GET requests or failed POST requests
     return render(request, 'bookshelf/book_form.html', {
+        'form': form,
         'action': 'Create',
-        'csrf_token': request.META.get('CSRF_COOKIE'),
     })
 
 @permission_required('bookshelf.can_edit', raise_exception=True)

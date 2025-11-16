@@ -43,53 +43,93 @@
 
         <h1>{{ action }} Book</h1>
         
-        <!-- SECURITY: Form with comprehensive protection measures -->
+        <!-- SECURITY: Form with comprehensive protection measures using Django Forms -->
         <form method="post" novalidate>
             <!-- SECURITY: CSRF token required for all POST requests -->
             {% csrf_token %}
             
-            <div class="form-group">
-                <label for="title">Title: <span style="color: red;">*</span></label>
-                <!-- SECURITY: Input validation attributes and auto-escaping -->
-                <input type="text" 
-                       id="title" 
-                       name="title" 
-                       value="{{ book.title|default:''|escape }}" 
-                       maxlength="200"
-                       required
-                       aria-describedby="title-help"
-                       placeholder="Enter book title (max 200 characters)">
-                <small id="title-help" style="color: #666;">Required field, maximum 200 characters</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="author">Author: <span style="color: red;">*</span></label>
-                <!-- SECURITY: Input validation and length limits -->
-                <input type="text" 
-                       id="author" 
-                       name="author" 
-                       value="{{ book.author|default:''|escape }}" 
-                       maxlength="100"
-                       required
-                       aria-describedby="author-help"
-                       placeholder="Enter author name (max 100 characters)">
-                <small id="author-help" style="color: #666;">Required field, maximum 100 characters</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="publication_year">Publication Year: <span style="color: red;">*</span></label>
-                <!-- SECURITY: Strict numeric validation with range limits -->
-                <input type="number" 
-                       id="publication_year" 
-                       name="publication_year" 
-                       value="{{ book.publication_year|default:'' }}" 
-                       min="1000" 
-                       max="2100" 
-                       required
-                       aria-describedby="year-help"
-                       placeholder="Enter publication year (1000-2100)">
-                <small id="year-help" style="color: #666;">Required field, must be between 1000 and 2100</small>
-            </div>
+            {% if form %}
+                <!-- SECURITY: Use Django Form rendering with validation -->
+                <div class="form-group">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                    {% if form.title.help_text %}
+                        <small style="color: #666;">{{ form.title.help_text }}</small>
+                    {% endif %}
+                    {% if form.title.errors %}
+                        {% for error in form.title.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.author.label_tag }}
+                    {{ form.author }}
+                    {% if form.author.help_text %}
+                        <small style="color: #666;">{{ form.author.help_text }}</small>
+                    {% endif %}
+                    {% if form.author.errors %}
+                        {% for error in form.author.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.publication_year.label_tag }}
+                    {{ form.publication_year }}
+                    {% if form.publication_year.help_text %}
+                        <small style="color: #666;">{{ form.publication_year.help_text }}</small>
+                    {% endif %}
+                    {% if form.publication_year.errors %}
+                        {% for error in form.publication_year.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% else %}
+                <!-- SECURITY: Fallback manual form fields with validation -->
+                <div class="form-group">
+                    <label for="title">Title: <span style="color: red;">*</span></label>
+                    <input type="text" 
+                           id="title" 
+                           name="title" 
+                           value="{{ book.title|default:''|escape }}" 
+                           maxlength="200"
+                           required
+                           aria-describedby="title-help"
+                           placeholder="Enter book title (max 200 characters)">
+                    <small id="title-help" style="color: #666;">Required field, maximum 200 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="author">Author: <span style="color: red;">*</span></label>
+                    <input type="text" 
+                           id="author" 
+                           name="author" 
+                           value="{{ book.author|default:''|escape }}" 
+                           maxlength="100"
+                           required
+                           aria-describedby="author-help"
+                           placeholder="Enter author name (max 100 characters)">
+                    <small id="author-help" style="color: #666;">Required field, maximum 100 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="publication_year">Publication Year: <span style="color: red;">*</span></label>
+                    <input type="number" 
+                           id="publication_year" 
+                           name="publication_year" 
+                           value="{{ book.publication_year|default:'' }}" 
+                           min="1000" 
+                           max="2100" 
+                           required
+                           aria-describedby="year-help"
+                           placeholder="Enter publication year (1000-2100)">
+                    <small id="year-help" style="color: #666;">Required field, must be between 1000 and 2100</small>
+                </div>
+            {% endif %}
             
             <div style="margin-top: 20px;">
                 <!-- SECURITY: Form submission button -->

@@ -147,6 +147,7 @@ def validate_security_implementation():
         'SECURITY_IMPLEMENTATION_GUIDE.md',
         'security_tests.py',
         'bookshelf/middleware.py',
+        'bookshelf/forms.py',
     ]
     
     for file_path in security_files:
