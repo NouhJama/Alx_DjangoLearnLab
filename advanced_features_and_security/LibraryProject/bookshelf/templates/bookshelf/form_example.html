@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ action }} Book - Library Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; box-sizing: border-box; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .permission-info { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #007bff; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="permission-info">
+            <p><strong>Required Permission:</strong> 
+                {% if action == 'Create' %}
+                    bookshelf.can_create
+                {% else %}
+                    bookshelf.can_edit
+                {% endif %}
+            </p>
+            <p>This form demonstrates permission-protected book {{ action|lower }} functionality.</p>
+        </div>
+
+        <div class="security-notice">
+            🔒 <strong>Security Notice:</strong> This form is protected by CSRF tokens, input validation, 
+            and permission-based access control. All data is automatically sanitized to prevent XSS attacks.
+        </div>
+
+        <!-- Display error messages if any -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="error-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h1>{{ action }} Book</h1>
+        
+        <!-- SECURITY: Form with comprehensive protection measures using Django Forms -->
+        <form method="post" novalidate>
+            <!-- SECURITY: CSRF token required for all POST requests -->
+            {% csrf_token %}
+            
+            {% if form %}
+                <!-- SECURITY: Use Django Form rendering with validation -->
+                <div class="form-group">
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                    {% if form.title.help_text %}
+                        <small style="color: #666;">{{ form.title.help_text }}</small>
+                    {% endif %}
+                    {% if form.title.errors %}
+                        {% for error in form.title.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.author.label_tag }}
+                    {{ form.author }}
+                    {% if form.author.help_text %}
+                        <small style="color: #666;">{{ form.author.help_text }}</small>
+                    {% endif %}
+                    {% if form.author.errors %}
+                        {% for error in form.author.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.publication_year.label_tag }}
+                    {{ form.publication_year }}
+                    {% if form.publication_year.help_text %}
+                        <small style="color: #666;">{{ form.publication_year.help_text }}</small>
+                    {% endif %}
+                    {% if form.publication_year.errors %}
+                        {% for error in form.publication_year.errors %}
+                            <div style="color: red;">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% else %}
+                <!-- SECURITY: Fallback manual form fields with validation -->
+                <div class="form-group">
+                    <label for="title">Title: <span style="color: red;">*</span></label>
+                    <input type="text" 
+                           id="title" 
+                           name="title" 
+                           value="{{ book.title|default:''|escape }}" 
+                           maxlength="200"
+                           required
+                           aria-describedby="title-help"
+                           placeholder="Enter book title (max 200 characters)">
+                    <small id="title-help" style="color: #666;">Required field, maximum 200 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="author">Author: <span style="color: red;">*</span></label>
+                    <input type="text" 
+                           id="author" 
+                           name="author" 
+                           value="{{ book.author|default:''|escape }}" 
+                           maxlength="100"
+                           required
+                           aria-describedby="author-help"
+                           placeholder="Enter author name (max 100 characters)">
+                    <small id="author-help" style="color: #666;">Required field, maximum 100 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="publication_year">Publication Year: <span style="color: red;">*</span></label>
+                    <input type="number" 
+                           id="publication_year" 
+                           name="publication_year" 
+                           value="{{ book.publication_year|default:'' }}" 
+                           min="1000" 
+                           max="2100" 
+                           required
+                           aria-describedby="year-help"
+                           placeholder="Enter publication year (1000-2100)">
+                    <small id="year-help" style="color: #666;">Required field, must be between 1000 and 2100</small>
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 20px;">
+                <!-- SECURITY: Form submission button -->
+                <input type="submit" value="{{ action }} Book" class="btn btn-primary">
+                
+                <!-- SECURITY: Safe internal navigation only -->
+                <a href="{% url 'book_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+        
+        <!-- SECURITY: Additional client-side validation (defense in depth) -->
+        <script>
+            // Basic client-side validation (server-side validation is primary)
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const title = document.getElementById('title').value.trim();
+                const author = document.getElementById('author').value.trim();
+                const year = document.getElementById('publication_year').value;
+                
+                if (!title || !author || !year) {
+                    alert('All fields are required.');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                if (title.length > 200) {
+                    alert('Title must be 200 characters or less.');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                if (author.length > 100) {
+                    alert('Author name must be 100 characters or less.');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                const yearNum = parseInt(year);
+                if (yearNum < 1000 || yearNum > 2100) {
+                    alert('Publication year must be between 1000 and 2100.');
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
