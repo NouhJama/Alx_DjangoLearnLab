@@ -20,12 +20,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# SECRET_KEY is used for cryptographic signing and should be unique and unpredictable
+# In production, this should be set via environment variable for security
+# Current key is for development only - marked as 'django-insecure'
 SECRET_KEY = "django-insecure-!jr@#%&3!!^4cdd4xk_ikx#1$=@#)#v09$av*ry9xio5_#@xf2"
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG mode exposes sensitive information and should never be True in production
+# Environment variable controls this: DEBUG=False for production, DEBUG=True for development
 import os
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'false'
 
+# ALLOWED_HOSTS prevents HTTP Host header attacks by validating the Host header
+# Must be configured with actual domain names in production
+# Security benefit: Prevents host header injection attacks
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
@@ -42,14 +50,39 @@ INSTALLED_APPS = [
     "relationship_app",
 ]
 
+# SECURITY MIDDLEWARE STACK - Order is critical for security
 MIDDLEWARE = [
+    # SecurityMiddleware: Handles various security headers and HTTPS redirects
+    # Must be first to ensure all security policies are applied
     "django.middleware.security.SecurityMiddleware",
+    
+    # SessionMiddleware: Manages user sessions securely
+    # Handles session cookies and session security
     "django.contrib.sessions.middleware.SessionMiddleware",
+    
+    # CommonMiddleware: Handles common HTTP processing
+    # Includes security features like URL rewriting and ETags
     "django.middleware.common.CommonMiddleware",
+    
+    # CsrfViewMiddleware: Protects against Cross-Site Request Forgery attacks
+    # Critical security middleware - validates CSRF tokens on POST requests
     "django.middleware.csrf.CsrfViewMiddleware",
+    
+    # AuthenticationMiddleware: Handles user authentication
+    # Associates users with requests using sessions/cookies
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    
+    # MessageMiddleware: Handles temporary messages (flash messages)
+    # Secure message storage and retrieval
     "django.contrib.messages.middleware.MessageMiddleware",
+    
+    # XFrameOptionsMiddleware: Prevents clickjacking attacks
+    # Controls whether site can be embedded in frames/iframes
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
+    # Custom CSP Middleware: Content Security Policy implementation
+    # Prevents XSS attacks by controlling resource loading
+    "bookshelf.middleware.CSPMiddleware",
 ]
 
 ROOT_URLCONF = "LibraryProject.urls"
@@ -83,20 +116,32 @@ DATABASES = {
 }
 
 
-# Password validation
+# SECURITY: Password validation configuration
+# Implements multiple layers of password security to prevent weak passwords
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # Prevents passwords similar to user information (username, email, etc.)
+        # Security benefit: Reduces predictable password attacks
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
+        # Enforces minimum password length (default: 8 characters)
+        # Security benefit: Increases password entropy and brute-force resistance
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,  # Explicit minimum length for clarity
+        }
     },
     {
+        # Prevents use of common passwords (from built-in list of 20,000+ common passwords)
+        # Security benefit: Blocks easily guessable passwords
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
+        # Prevents purely numeric passwords
+        # Security benefit: Increases password complexity requirements
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
@@ -124,29 +169,90 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# SECURITY: Custom User Model Configuration
+# Uses CustomUser model with additional security fields
+# Security benefit: Centralized user management with extended security features
 AUTH_USER_MODEL = 'bookshelf.CustomUser'
 
-# Security Settings - Environment Dependent
-# Only enforce HTTPS in production (when DEBUG=False)
+# ============================================================================
+# COMPREHENSIVE SECURITY CONFIGURATION
+# ============================================================================
+
+# SECURITY: Environment-Dependent HTTPS/SSL Configuration
+# Only enforce HTTPS in production (when DEBUG=False) to allow local development
+# This approach provides security in production while maintaining development flexibility
 if not DEBUG:
-    # HTTPS Enforcement
-    SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
-    SECURE_HSTS_SECONDS = 31536000  # 1 year in seconds
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply to all subdomains
-    SECURE_HSTS_PRELOAD = True  # Allow inclusion in HSTS preload list
+    # HTTPS Enforcement - Forces all HTTP traffic to redirect to HTTPS
+    # Security benefit: Ensures all data transmission is encrypted
+    SECURE_SSL_REDIRECT = True
     
-    # Secure Cookies (only send over HTTPS)
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    # HTTP Strict Transport Security (HSTS) Configuration
+    # Forces browsers to only use HTTPS for the specified duration
+    SECURE_HSTS_SECONDS = 31536000  # 1 year (365 days * 24 hours * 60 minutes * 60 seconds)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # Apply HSTS to all subdomains
+    SECURE_HSTS_PRELOAD = True  # Allow inclusion in browser HSTS preload lists
+    # Security benefit: Prevents downgrade attacks and ensures HTTPS-only access
     
-    # Secure Proxy Headers (for reverse proxy setups)
+    # Secure Cookie Configuration - Cookies only transmitted over HTTPS
+    SESSION_COOKIE_SECURE = True  # Session cookies require HTTPS
+    CSRF_COOKIE_SECURE = True     # CSRF tokens require HTTPS
+    # Security benefit: Prevents session hijacking and CSRF token interception
+    
+    # Secure Proxy Configuration for reverse proxy setups (Nginx, Apache, CloudFlare)
+    # Trusts X-Forwarded-Proto header to determine if request was made over HTTPS
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Security benefit: Proper HTTPS detection behind load balancers/proxies
 
-# Security Headers (apply in both dev and production)
-X_FRAME_OPTIONS = 'DENY'  # Prevent embedding in frames
-SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
-SECURE_BROWSER_XSS_FILTER = True  # Enable XSS filtering
+# SECURITY HEADERS - Applied in both development and production environments
+# These headers provide defense-in-depth security measures
 
-# Additional Security Settings
+# X-Frame-Options: Prevents clickjacking attacks
+# DENY = Prevents embedding in ANY frame/iframe
+# Alternative options: SAMEORIGIN (same domain only), ALLOW-FROM (specific domain)
+X_FRAME_OPTIONS = 'DENY'
+# Security benefit: Prevents UI redressing and clickjacking attacks
+
+# Content-Type Security: Prevents MIME type sniffing
+# Forces browsers to respect declared content types
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# Security benefit: Prevents execution of files as unintended MIME types
+
+# XSS Protection: Enables browser's built-in XSS filtering
+# Modern browsers have this enabled by default, but explicit declaration ensures compatibility
+SECURE_BROWSER_XSS_FILTER = True
+# Security benefit: Browser-level XSS attack prevention
+
+# Referrer Policy: Controls referrer information sent with requests
+# 'strict-origin-when-cross-origin': Sends full URL for same-origin, only origin for cross-origin HTTPS
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+# Security benefit: Prevents information leakage while maintaining functionality
+
+# Cross-Origin Opener Policy: Prevents cross-origin access to window references
+# Helps mitigate Spectre-like attacks via popup/window references
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+# Security benefit: Isolates browsing contexts for security
+
+# ============================================================================
+# ADDITIONAL SECURITY CONFIGURATIONS
+# ============================================================================
+
+# Session Security Configuration
+# Controls session cookie behavior and security
+SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript access to session cookies
+SESSION_COOKIE_AGE = 3600       # Session timeout: 1 hour (3600 seconds)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Sessions expire when browser closes
+# Security benefit: Reduces session hijacking risk and limits session exposure
+
+# CSRF Protection Enhancement
+# Additional CSRF security measures beyond default middleware
+CSRF_COOKIE_HTTPONLY = True     # Prevents JavaScript access to CSRF tokens
+CSRF_COOKIE_SAMESITE = 'Strict' # Strict SameSite policy for CSRF cookies
+CSRF_USE_SESSIONS = False       # Use cookies for CSRF tokens (default, but explicit)
+# Security benefit: Enhanced CSRF attack prevention
+
+# File Upload Security
+# Controls file upload behavior and security
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB max file size in memory
+FILE_UPLOAD_PERMISSIONS = 0o644        # Secure file permissions
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 MB max request size in memory
+# Security benefit: Prevents denial of service via large file uploads

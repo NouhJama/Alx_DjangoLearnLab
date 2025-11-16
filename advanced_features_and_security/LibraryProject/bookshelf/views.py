@@ -1,45 +1,197 @@
+"""
+Secure Views for LibraryProject Bookshelf Application
+
+This module implements secure views with comprehensive security measures:
+- SQL Injection Prevention: Uses Django ORM and parameterized queries
+- XSS Prevention: Automatic template escaping and input validation
+- CSRF Protection: Required CSRF tokens on all POST requests
+- Authorization: Permission-based access control
+- Input Validation: Server-side validation for all user inputs
+- Secure Redirects: Only internal redirects to prevent open redirects
+
+Security Measures Implemented:
+1. Permission-based access control using Django's permission system
+2. CSRF protection via middleware and template tokens
+3. SQL injection prevention through Django ORM
+4. XSS prevention through template auto-escaping
+5. Input validation and sanitization
+6. Secure error handling with proper HTTP status codes
+"""
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, Http404
 from django.contrib import messages
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.utils.html import escape
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
+import logging
 from .models import Book
 
-# Permission-based function views with proper permission checks
-# These views use the custom permissions: can_view, can_create, can_edit, can_delete
+# Configure logging for security events
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# SECURITY-ENHANCED FUNCTION-BASED VIEWS
+# ============================================================================
+# These views implement comprehensive security measures including:
+# - Permission-based access control
+# - CSRF protection
+# - Input validation and sanitization
+# - SQL injection prevention
+# - XSS prevention
+# - Secure error handling
 
 @permission_required('bookshelf.can_view', raise_exception=True)
+@require_http_methods(["GET"])  # Only allow GET requests for security
 def book_list_view(request):
     """
-    View to list all books - requires 'can_view' permission.
-    Users must be in a group with 'can_view' permission to access this view.
+    SECURE VIEW: List all books with permission-based access control.
+    
+    Security Measures:
+    - Permission Check: Requires 'bookshelf.can_view' permission
+    - HTTP Method Restriction: Only GET requests allowed
+    - SQL Injection Prevention: Uses Django ORM (no raw SQL)
+    - XSS Prevention: Template auto-escaping enabled
+    - Error Handling: 403 Forbidden for unauthorized users
+    
+    Args:
+        request: HTTP request object (authenticated user required)
+        
+    Returns:
+        HttpResponse: Rendered book list template with book data
+        
+    Raises:
+        PermissionDenied: If user lacks 'can_view' permission
     """
-    books = Book.objects.all()
-    return render(request, 'bookshelf/book_list.html', {'books': books})
+    try:
+        # Use Django ORM to prevent SQL injection
+        # .all() is safe - no user input involved
+        books = Book.objects.all()
+        
+        # Log successful access for audit trail
+        logger.info(f"User {request.user.username} accessed book list")
+        
+        # Context data is automatically escaped in templates
+        context = {
+            'books': books,
+            'user_permissions': request.user.get_all_permissions(),
+        }
+        
+        return render(request, 'bookshelf/book_list.html', context)
+        
+    except Exception as e:
+        # Log security-relevant errors
+        logger.error(f"Error in book_list_view for user {request.user.username}: {str(e)}")
+        # Don't expose internal errors to users
+        messages.error(request, "An error occurred while loading books.")
+        return render(request, 'bookshelf/book_list.html', {'books': []})
 
 @permission_required('bookshelf.can_create', raise_exception=True)
+@csrf_protect  # Explicit CSRF protection (redundant but explicit)
+@require_http_methods(["GET", "POST"])  # Only allow GET and POST
 def book_create_view(request):
     """
-    View to create a new book - requires 'can_create' permission.
-    Only users with 'can_create' permission can add new books.
+    SECURE VIEW: Create a new book with comprehensive security measures.
+    
+    Security Measures:
+    - Permission Check: Requires 'bookshelf.can_create' permission
+    - CSRF Protection: Required CSRF token on POST requests
+    - Input Validation: Server-side validation of all inputs
+    - XSS Prevention: Input sanitization and template escaping
+    - SQL Injection Prevention: Django ORM with parameterized queries
+    - HTTP Method Restriction: Only GET/POST allowed
+    - Secure Redirects: Only internal redirects
+    
+    Args:
+        request: HTTP request object (authenticated user required)
+        
+    Returns:
+        HttpResponse: Book form template or redirect to book list
+        
+    Raises:
+        PermissionDenied: If user lacks 'can_create' permission
+        ValidationError: If input validation fails
     """
     if request.method == 'POST':
-        title = request.POST.get('title')
-        author = request.POST.get('author')
-        publication_year = request.POST.get('publication_year')
-        
-        if title and author and publication_year:
-            Book.objects.create(
+        try:
+            # SECURITY: Input validation and sanitization
+            title = request.POST.get('title', '').strip()
+            author = request.POST.get('author', '').strip()
+            publication_year_str = request.POST.get('publication_year', '').strip()
+            
+            # Validate required fields
+            if not title:
+                messages.error(request, "Title is required.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            if not author:
+                messages.error(request, "Author is required.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            if not publication_year_str:
+                messages.error(request, "Publication year is required.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            # SECURITY: Validate title length (prevent excessively long inputs)
+            if len(title) > 200:
+                messages.error(request, "Title must be 200 characters or less.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            # SECURITY: Validate author length
+            if len(author) > 100:
+                messages.error(request, "Author name must be 100 characters or less.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            # SECURITY: Validate and sanitize publication year
+            try:
+                publication_year = int(publication_year_str)
+                if publication_year < 1000 or publication_year > 2100:
+                    messages.error(request, "Publication year must be between 1000 and 2100.")
+                    return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            except ValueError:
+                messages.error(request, "Publication year must be a valid number.")
+                return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+            
+            # SECURITY: Additional input sanitization (escape HTML entities)
+            title = escape(title)
+            author = escape(author)
+            
+            # SECURITY: Use Django ORM to prevent SQL injection
+            # ORM automatically parameterizes queries
+            book = Book.objects.create(
                 title=title,
                 author=author,
-                publication_year=int(publication_year)
+                publication_year=publication_year
             )
+            
+            # Log successful creation for audit trail
+            logger.info(f"User {request.user.username} created book: {book.title}")
+            
             messages.success(request, 'Book created successfully!')
+            
+            # SECURITY: Use internal redirect only (prevent open redirects)
             return redirect('book_list')
+            
+        except ValidationError as e:
+            # Handle model validation errors
+            logger.warning(f"Validation error in book creation: {str(e)}")
+            messages.error(request, "Invalid input data. Please check your entries.")
+            
+        except Exception as e:
+            # Log unexpected errors
+            logger.error(f"Unexpected error in book_create_view: {str(e)}")
+            messages.error(request, "An error occurred while creating the book.")
     
-    return render(request, 'bookshelf/book_form.html', {'action': 'Create'})
+    # Render form for GET requests or failed POST requests
+    return render(request, 'bookshelf/book_form.html', {
+        'action': 'Create',
+        'csrf_token': request.META.get('CSRF_COOKIE'),
+    })
 
 @permission_required('bookshelf.can_edit', raise_exception=True)
 def book_edit_view(request, book_id):
