@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "api",
+    "book",  # New book app
     "rest_framework.authtoken", #  This is for token authentication
     
 ]
