@@ -16,6 +16,7 @@ class ListView(generics.ListAPIView):
     filterset_fields = ['author', 'title', 'publication_year'] # Fields to filter by
     search_fields = ['title', 'author__name']  # Fields to search
     ordering_fields = ['title', 'publication_year', 'author__name']  # Fields
+    ordering = ['title', 'publication_year']  # Default ordering
     
 class CreateView(generics.CreateAPIView):
     queryset = Book.objects.all()
