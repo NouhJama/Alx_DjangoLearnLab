@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Author, Book
 from .serializers import  BookSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
@@ -9,6 +10,8 @@ class ListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [DjangoFilterBackend] # Add filtering backend
+    filterset_fields = ['author', 'title', 'publication_year'] # Fields to filter by
     
 class CreateView(generics.CreateAPIView):
     queryset = Book.objects.all()
