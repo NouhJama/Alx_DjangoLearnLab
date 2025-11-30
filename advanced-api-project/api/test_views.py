@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .models import Book
+from .models import Book, Author
 
 class BookAPITestCase(APITestCase):
     def setUp(self):
@@ -42,9 +42,17 @@ class BookAPITestCase(APITestCase):
         self.assertEqual(Book.objects.get(id=response.data['id']).title, 'New Book')    
 
     def test_delete_book_without_authentication(self):
-        url = reverse('book-delete', args=[self.book.id])
+        url = reverse('book-delete')
         # Remove authentication
         self.client.credentials()
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(Book.objects.count(), 1)
+
+    # delete with login
+    def test_delete_book_with_authentication(self):
+        self.client.login(username='testuser', password='testpass')
+        url = reverse('book-delete')
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Book.objects.count(), 0)
