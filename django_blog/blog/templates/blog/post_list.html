@@ -1,0 +1,25 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Django Blog{% endblock %}
+
+{% block content %}
+    <h1>Django Blog</h1>
+    
+    {% if user.is_authenticated %}
+        <p>Welcome, {{ user.username }}! <a href="{% url 'create_post' %}" class="btn">Write Post</a></p>
+    {% endif %}
+    
+    <h2>Recent Posts</h2>
+    
+    {% if posts %}
+        {% for post in posts %}
+            <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                <h3>{{ post.title }}</h3>
+                <p>{{ post.content|truncatewords:30 }}</p>
+                <small>By {{ post.author.get_full_name|default:post.author.username }} on {{ post.published_date|date:"M d, Y" }}</small>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No posts available.</p>
+    {% endif %}
+{% endblock %}

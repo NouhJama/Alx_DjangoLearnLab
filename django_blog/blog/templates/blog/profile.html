@@ -1,0 +1,40 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <h2>{{ user.get_full_name|default:user.username }}'s Profile</h2>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Name:</strong> {{ user.get_full_name|default:"Not provided" }}</p>
+        <p><strong>Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+        
+        {% if profile.bio %}
+            <p><strong>Bio:</strong> {{ profile.bio }}</p>
+        {% endif %}
+        
+        {% if profile.profile_picture %}
+            <p><strong>Profile Picture:</strong><br>
+            <img src="{{ profile.profile_picture.url }}" alt="Profile" style="width: 100px; height: 100px; border-radius: 50%;"></p>
+        {% endif %}
+    </div>
+    
+    <h3>Your Posts ({{ posts_count }})</h3>
+    {% if user_posts %}
+        {% for post in user_posts %}
+            <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+                <h4>{{ post.title }}</h4>
+                <p>{{ post.content|truncatewords:20 }}</p>
+                <small>Published: {{ post.published_date|date:"M d, Y" }}</small>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No posts yet.</p>
+    {% endif %}
+    
+    <p>
+        <a href="{% url 'profile_edit' %}" class="btn">Edit Profile</a>
+    </p>
+{% endblock %}
