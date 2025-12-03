@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, Post
 
 # Form for user registration
 class RegisterForm(UserCreationForm):
@@ -53,3 +53,36 @@ class ProfileUpdateForm(forms.ModelForm):
             'location': forms.TextInput(attrs={'placeholder': 'Your location'}),
             'birth_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Post Title'}),
+            'content': forms.Textarea(attrs={'rows': 10, 'placeholder': 'Write your post content here...'}),
+        }
+    def clean_title(self):
+        title = self.cleaned_data.get('title')
+        if not title:
+            raise forms.ValidationError("Title cannot be empty.")
+        return title
+    
+    def clean_content(self):
+        content = self.cleaned_data.get('content')
+        if not content:
+            raise forms.ValidationError("Content cannot be empty.")
+        if len(content) < 10:
+            raise forms.ValidationError("Content must be at least 10 characters long.") 
+        return content
+    
+class UpdatePostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Post Title'}),
+            'content': forms.Textarea(attrs={'rows': 10, 'placeholder': 'Write your post content here...'}),
+        }
+
+    def clean_title(self):

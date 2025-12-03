@@ -1,0 +1,25 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ post.title }}</h1>
+    
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        <p><strong>Author:</strong> {{ post.author.get_full_name|default:post.author.username }}</p>
+        <p><strong>Published:</strong> {{ post.published_date|date:"F d, Y g:i A" }}</p>
+    </div>
+    
+    <div style="line-height: 1.6; margin-bottom: 20px;">
+        {{ post.content|linebreaks }}
+    </div>
+    
+    {% if post.author == user %}
+        <div>
+            <a href="{% url 'post_edit' post.pk %}" class="btn" style="background: #28a745;">Edit Post</a>
+            <a href="{% url 'post_delete' post.pk %}" class="btn" style="background: #dc3545;">Delete Post</a>
+        </div>
+    {% endif %}
+    
+    <p><a href="{% url 'blog-home' %}" class="btn">Back to Posts</a></p>
+{% endblock %}

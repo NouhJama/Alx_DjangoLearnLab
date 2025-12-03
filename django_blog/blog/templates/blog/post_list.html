@@ -6,19 +6,45 @@
     <h1>Django Blog</h1>
     
     {% if user.is_authenticated %}
-        <p>Welcome, {{ user.username }}! <a href="{% url 'create_post' %}" class="btn">Write Post</a></p>
+        <p>Welcome, {{ user.username }}! 
+            <a href="{% url 'post_create' %}" class="btn">Write New Post</a>
+        </p>
     {% endif %}
+    
+    <p>Total Posts: {{ total_posts }}</p>
     
     <h2>Recent Posts</h2>
     
     {% if posts %}
         {% for post in posts %}
             <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
-                <h3>{{ post.title }}</h3>
+                <h3><a href="{% url 'post_detail' post.pk %}">{{ post.title }}</a></h3>
                 <p>{{ post.content|truncatewords:30 }}</p>
                 <small>By {{ post.author.get_full_name|default:post.author.username }} on {{ post.published_date|date:"M d, Y" }}</small>
+                
+                {% if post.author == user %}
+                    <div style="margin-top: 10px;">
+                        <a href="{% url 'post_edit' post.pk %}" class="btn" style="background: #28a745;">Edit</a>
+                        <a href="{% url 'post_delete' post.pk %}" class="btn" style="background: #dc3545;">Delete</a>
+                    </div>
+                {% endif %}
             </div>
         {% endfor %}
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div style="text-align: center; margin-top: 20px;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn">Previous</a>
+                {% endif %}
+                
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn">Next</a>
+                {% endif %}
+            </div>
+        {% endif %}
     {% else %}
         <p>No posts available.</p>
     {% endif %}
