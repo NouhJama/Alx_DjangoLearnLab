@@ -3,7 +3,8 @@ from django.contrib.auth import login
 
 from blog.forms import ProfileUpdateForm
 from .models import Post, UserProfile
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views import generic
@@ -44,7 +45,7 @@ class PostCreateView(LoginRequiredMixin, generic.CreateView):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
-class PostUpdateView(LoginRequiredMixin, generic.UpdateView):
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
     model = Post
     fields = ["title", "content"]
     template_name = "blog/post_form.html"  # Specify your template name
