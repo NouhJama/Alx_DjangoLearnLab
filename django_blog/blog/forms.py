@@ -34,7 +34,7 @@ class UserProfileForm(forms.ModelForm):
     email = forms.EmailField(required=True)
 
     class Meta:
-        model = User
+        model = UserProfile
         fields = ["bio", "location", "birth_date", "profile_picture"]
 
     def cleaned_email(self):
@@ -43,17 +43,8 @@ class UserProfileForm(forms.ModelForm):
         if User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
             raise forms.ValidationError("This email address is already in use.")
         return email
-class ProfileUpdateForm(forms.ModelForm):
-
-    class Meta:
-        model = UserProfile
-        fields = ["bio", "location", "birth_date", "profile_picture"]
-        widgets = {
-            'bio': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Tell us about yourself... '}),
-            'location': forms.TextInput(attrs={'placeholder': 'Your location'}),
-            'birth_date': forms.DateInput(attrs={'type': 'date'}),
-        }
-
+    
+# Form for creating and updating blog posts
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
@@ -86,3 +77,7 @@ class UpdatePostForm(forms.ModelForm):
         }
 
     def clean_title(self):
+        title = self.cleaned_data.get('title')
+        if not title:
+            raise forms.ValidationError("Title cannot be empty.")
+        return title        

@@ -1,28 +1,71 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
-
-from blog.forms import ProfileUpdateForm
+from django.contrib.auth.views import LoginView, LogoutView
 from .models import Post, UserProfile
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views import generic
-from django.forms import RegisterForm
+from .forms import RegisterForm, PostForm, UserProfileForm, UpdatePostForm
 from django.contrib.auth.forms import UserCreationForm
 
 # Create your views here.
-def register(request):
-    if request.method == "POST": # If the request method is POST
-        form = RegisterForm(request.POST) # Instantiate the registration form with POST data
-        if form.is_valid(): # If the form is valid
-            user = form.save() # Save the new user
-            login(request, user)    # Log the user in
-            return redirect("blog-home") # Redirect to home page after successful registration
-    else: # If the request method is GET    
-        form = RegisterForm() # Instantiate an empty registration form
-    # Render the registration template with the form    
-    return render(request, "blog/registration.html", {"form": form})
+class LoginView(LoginView):  # ✅ CBV for login
+    template_name = 'blog/login.html'
+    
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Welcome back, {form.get_user().username}!')
+        return super().form_valid(form)
+    
+class LogoutView(LogoutView):  # ✅ CBV for logout
+    template_name = 'blog/logout.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        messages.info(request, 'You have been logged out successfully.')
+        return super().dispatch(request, *args, **kwargs)
+
+class RegisterView(generic.FormView):  # ✅ CBV for registration
+    template_name = 'blog/register.html'
+    form_class = RegisterForm
+    success_url = reverse_lazy('profile')
+
+    def form_valid(self, form):
+        # Save the user
+        user = form.save()
+        
+        # Log the user in automatically
+        LoginView(self.request, user)
+        
+        # Add success message
+        username = form.cleaned_data.get('username')
+        messages.success(self.request, f'Account created for {username}!')
+        
+        return super().form_valid(form)
+    
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        user_form = UserCreationForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=request.user.userprofile)
+        
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
+    else:
+        user_form = UserCreationForm(instance=request.user)
+        profile_form = UserProfileForm(instance=request.user.userprofile)
+    
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form
+    }
+    
+    return render(request, 'blog/profile.html', context)
+
+
 
 class PostListView(generic.ListView):
     model = Post
