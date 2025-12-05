@@ -53,7 +53,10 @@ class PostForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Post Title'}),
             'content': forms.Textarea(attrs={'rows': 10, 'placeholder': 'Write your post content here...'}),
-            'tags': forms.TextInput(attrs={'placeholder': 'Comma-separated tags'}),
+            'tags': TagWidget(
+                attrs={'placeholder': 'Add tags separated by commas', 'class': 'tag-input', 'data-role': 'tagsinput'}
+
+            ),
         }
 
 
