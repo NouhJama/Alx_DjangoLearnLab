@@ -112,7 +112,7 @@ class PostDeleteView(LoginRequiredMixin, generic.DeleteView):
         return super().delete(request, *args, **kwargs) 
     
 
-class CreateCommentView(LoginRequiredMixin, generic.CreateView):
+class CommentCreateView(LoginRequiredMixin, generic.CreateView):
     model = Comment
     fields = ['content']
     template_name = 'blog/comment_form.html'
@@ -125,7 +125,7 @@ class CreateCommentView(LoginRequiredMixin, generic.CreateView):
     def get_success_url(self):
         return reverse_lazy('post-detail', kwargs={'pk': self.kwargs['post_id']})
     
-class UpdateCommentView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
     model = Comment
     fields = ['content']
     template_name = 'blog/comment_form.html'
@@ -141,7 +141,7 @@ class UpdateCommentView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateV
         comment = self.get_object()
         return self.request.user == comment.author
     
-class DeleteCommentView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteView):
     model = Comment
     template_name = 'blog/comment_confirm_delete.html'
 
@@ -151,5 +151,4 @@ class DeleteCommentView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteV
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.author
-    
     
