@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.views import LoginView, LogoutView, 
+from django.contrib.auth.views import LoginView, LogoutView
 from .models import Post, UserProfile, Comment
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
@@ -69,10 +69,31 @@ def profile(request):
 
 class PostListView(generic.ListView):
     model = Post
-    template_name = "blog/home.html"  # Specify your template name
+    template_name = "blog/post_list.html"  # Specify your template name
     context_object_name = "posts"
     ordering = ["-published_date"]
     paginate_by = 5
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_posts'] = Post.objects.count()
+        return context
+
+class TaggedPostListView(generic.ListView):
+    model = Post
+    template_name = "blog/post_list.html"
+    context_object_name = "posts"
+    paginate_by = 5
+
+    def get_queryset(self):
+        tag_name = self.kwargs['tag_name']
+        return Post.objects.filter(tags__name=tag_name).order_by('-published_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tag_name'] = self.kwargs['tag_name']
+        context['total_posts'] = self.get_queryset().count()
+        return context
 
 class PostDetailView(generic.DetailView):
     model = Post
@@ -80,8 +101,8 @@ class PostDetailView(generic.DetailView):
 
 class PostCreateView(LoginRequiredMixin, generic.CreateView):
     model = Post
-    fields = ["title", "content"]
-    template_name = "blog/post_form.html"  # Specify your template name
+    form_class = PostForm
+    template_name = "blog/post_create.html"  # Specify your template name
 
     def form_valid(self, form):
         # Set the author of the post to the current logged-in user
@@ -90,13 +111,18 @@ class PostCreateView(LoginRequiredMixin, generic.CreateView):
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, generic.UpdateView):
     model = Post
-    fields = ["title", "content"]
-    template_name = "blog/post_form.html"  # Specify your template name
+    form_class = PostForm
+    template_name = "blog/post_create.html"  # Specify your template name
 
     def form_valid(self, form):
         # Ensure the author of the post is the current logged-in user
         form.instance.author = self.request.user
         return super().form_valid(form)
+    
+    def test_func(self):
+        # Only allow the author to edit the post
+        post = self.get_object()
+        return self.request.user == post.author
     
 class PostDeleteView(LoginRequiredMixin, generic.DeleteView):
     model = Post
@@ -152,3 +178,14 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteV
         comment = self.get_object()
         return self.request.user == comment.author
     
+def SearchPostView(request):
+    query = request.GET.get('q')
+    results = Post.objects.filter(title__icontains=query) | Post.objects.filter(content__icontains=query)
+    
+    context = {
+        'posts': results,
+        'total_posts': results.count(),
+        'search_query': query
+    }
+    
+    return render(request, 'blog/post_list.html', context)

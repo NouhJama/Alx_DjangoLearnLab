@@ -54,9 +54,7 @@ class PostForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'placeholder': 'Post Title'}),
             'content': forms.Textarea(attrs={'rows': 10, 'placeholder': 'Write your post content here...'}),
             'tags': TagWidget(
-                attrs={'placeholder': 'Add tags separated by commas', 'class': 'tag-input', 'data-role': 'tagsinput'}
-
-            ),
+                attrs={'placeholder': 'Add tags separated by commas', 'class': 'tag-input', 'data-role': 'tagsinput'}),
         }
 
 
@@ -90,6 +88,14 @@ class UpdatePostForm(forms.ModelForm):
         return title        
     
 class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Write your comment here...'}),
+        }
+
+class CommentUpdateForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['content']
