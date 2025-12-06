@@ -79,19 +79,19 @@ class PostListView(generic.ListView):
         context['total_posts'] = Post.objects.count()
         return context
 
-class TaggedPostListView(generic.ListView):
+class PostByTagListView(generic.ListView):
     model = Post
     template_name = "blog/post_list.html"
     context_object_name = "posts"
     paginate_by = 5
 
     def get_queryset(self):
-        tag_name = self.kwargs['tag_name']
-        return Post.objects.filter(tags__name=tag_name).order_by('-published_date')
+        tag_slug = self.kwargs['tag_slug']
+        return Post.objects.filter(tags__slug=tag_slug).order_by('-published_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['tag_name'] = self.kwargs['tag_name']
+        context['tag_slug'] = self.kwargs['tag_slug']
         context['total_posts'] = self.get_queryset().count()
         return context
 
@@ -189,3 +189,4 @@ def SearchPostView(request):
     }
     
     return render(request, 'blog/post_list.html', context)
+
