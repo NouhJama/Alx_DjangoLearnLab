@@ -180,7 +180,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, generic.DeleteV
     
 def SearchPostView(request):
     query = request.GET.get('q')
-    results = Post.objects.filter(title__icontains=query) | Post.objects.filter(content__icontains=query)
+    results = Post.objects.filter(title__icontains=query) | Post.objects.filter(content__icontains=query) | Post.objects.filter(tags__name__icontains=query).distinct()
     
     context = {
         'posts': results,
