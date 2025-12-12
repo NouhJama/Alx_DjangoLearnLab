@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 
 class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(required=True)
+    username = serializers.CharField()
+    email = serializers.EmailField()
     bio = serializers.CharField(required=False, allow_blank=True)
+    birth_date = serializers.DateField(required=False, allow_null=True)
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     
     class Meta:
