@@ -1,14 +1,18 @@
 from rest_framework import serializers
 from .models import CustomUser, Post, Comment
+from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    
     class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'bio', 'birth_date', 'profile_picture', 'followers']
+        model = get_user_model()
+        fields = ['id', 'username', 'email', 'password', 'bio', 'birth_date', 'profile_picture', 'followers']
         read_only_fields = ['id', 'followers']
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(
+        user = get_user_model().objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data.get('password'),
@@ -16,7 +20,13 @@ class UserSerializer(serializers.ModelSerializer):
             birth_date=validated_data.get('birth_date', None),
             profile_picture=validated_data.get('profile_picture', None)
         )
+        Token.objects.create(user=user)
         return user
+    
+    def validate(self, data):
+       # validate credentials
+       data['user'] = get_user_model().objects.get(username=data['username'])
+       return data
     
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
