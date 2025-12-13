@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from .models import Post, Comment
-from rest_framework import viewsets
+from .models import Post, Comment, Like
+from rest_framework import viewsets, status, generics
+from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import PostSerializer, CommentSerializer
@@ -33,3 +34,23 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+# Like and Unlike functionality
+class LikePostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def like_post(self, request, pk=None):
+        post = generics.get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if created:
+            return Response({'status': 'post liked'})
+        return Response({'status': 'post already liked'}, status=status.HTTP_400_BAD_REQUEST)   
+
+    def unlike_post(self, request, pk=None):
+        post = generics.get_object_or_404(Post, pk=pk)
+        post.likes.remove(request.user)
+        post.save()
+        return Response({'status': 'post unliked'})
