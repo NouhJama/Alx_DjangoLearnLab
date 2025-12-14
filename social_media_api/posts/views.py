@@ -2,6 +2,7 @@ from django.shortcuts import render
 from .models import Post, Comment, Like
 from rest_framework import viewsets, status, generics, permissions
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import PostSerializer, CommentSerializer
@@ -19,7 +20,7 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     pagination_class = DefaultPagination
     # Filtering and searching 
-    filter_backends = ['SearchFilter', 'DjangoFilterBackend']
+    filter_backends = [SearchFilter, DjangoFilterBackend]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)   
@@ -36,11 +37,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
 # Like and Unlike functionality
-class LikePostViewSet(viewsets.ViewSet):
+class LikePostView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
-    def like(self, request, pk=None):
+    def post(self, request, pk):
         post = generics.get_object_or_404(Post, pk=pk)
         like, created = Like.objects.get_or_create(user=request.user, post=post)
         
@@ -56,7 +57,12 @@ class LikePostViewSet(viewsets.ViewSet):
         else:
             return Response({'status': 'you already liked this post'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def unlike(self, request, pk=None):
+
+class UnlikePostView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
         post = generics.get_object_or_404(Post, pk=pk)
         
         try:

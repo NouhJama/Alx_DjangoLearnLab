@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from .models import  Post, Comment
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 
@@ -48,8 +47,8 @@ class LoginSerializer(serializers.Serializer):
         
         if username and password:
             try:
-                user = get_user_model.objects.get(username=username)
-            except get_user_model.DoesNotExist:
+                user = get_user_model().objects.get(username=username)
+            except get_user_model().DoesNotExist:
                 raise serializers.ValidationError("Invalid username or password.")
             
             if not user.check_password(password):
@@ -60,14 +59,3 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
     
-class PostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = "__all__"
-        read_only_fields = ['author', 'created_at']
-
-class CommentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = "__all__"
-        read_only_fields = ['author', 'created_at']
