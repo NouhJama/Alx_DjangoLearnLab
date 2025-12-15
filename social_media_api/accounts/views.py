@@ -3,6 +3,7 @@ from django.shortcuts import render
 import accounts
 from posts.permissions import IsOwnerOrReadOnly
 from .models import CustomUser
+from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework import generics
 from .serializers import UserCreateSerializer, LoginSerializer, UserSerializer
@@ -70,7 +71,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return CustomUser.objects.filter(id=self.request.user.id)
     
 # Follow and Unfollow functionality
-class FollowView(APIView):
+class FollowView(generics.GenericAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
 
@@ -95,7 +96,7 @@ class FollowView(APIView):
                         status=status.HTTP_200_OK
                         )
 # Unfollow functionality
-class UnfollowView(APIView):
+class UnfollowView(generics.GenericAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
 
