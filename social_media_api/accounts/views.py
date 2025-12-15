@@ -69,3 +69,52 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
     
+# Follow and Unfollow functionality
+class FollowView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
+
+    def post(self, request, pk):
+        try:
+            target_user = CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # Prevent users from following/unfollowing themselves
+        if target_user == request.user:
+            return Response({'error': 'You cannot follow/unfollow yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if already following
+        if request.user.following.filter(id=target_user.id).exists():
+            # Return 'You are already following this user'
+            return Response({'status': 'You are already following this user.'}, 
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
+        # Add target_user to the following list of the request.user
+        request.user.following.add(target_user)
+        return Response({'status': 'User followed successfully.'}, 
+                        status=status.HTTP_200_OK
+                        )
+# Unfollow functionality
+class UnfollowView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
+
+    def post(self, request, pk):
+        try:
+            target_user = CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # Prevent users from following/unfollowing themselves
+        if target_user == request.user:
+            return Response({'error': 'You cannot follow/unfollow yourself.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if already following and unfollow
+        if request.user.following.filter(id=target_user.id).exists():
+            request.user.following.remove(target_user)
+            return Response({'status': 'User unfollowed successfully.'}, 
+                            status=status.HTTP_200_OK
+                            )
+        return Response({'status': 'You are not following this user.'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                        )
+    
