@@ -97,7 +97,7 @@ DATABASES = {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
             "charset": "utf8mb4",
             "use_unicode": True,
-            "collation": "utf8mb4_general_520_ci",
+            "collation": "utf8mb4_general_ci",
         },
     }
 }

@@ -1,14 +1,14 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from .models import CustomUser, Post, Comment
 
-# Custom permissions only logged-in users can create posts/comments
+# Custom permissions only logged-in users can view profiles of others.
 class IsAuthenticatedOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
         return request.user and request.user.is_authenticated
 
-# Custom permission to allow only owner to edit or delete their objects(posts/comments)
+# Custom permission to allow only owner to edit or delete their profiles.
 class IsOwnerOrReadOnly(BasePermission):
     def has_object_permission(self, request, view, obj):
         # Read permissions are allowed to any request,

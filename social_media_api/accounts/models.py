@@ -8,7 +8,7 @@ class CustomUser(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
-    followers = models.ManyToManyField('self', symmetrical=False, related_name='following', blank=True)
+    following = models.ManyToManyField('self', symmetrical=False, related_name='followers_set', blank=True) 
 
     def validate_birth_date(self):
         if self.birth_date and self.birth_date > timezone.now().date():
