@@ -1,28 +1,21 @@
 from django.shortcuts import render
-
 import accounts
 from posts.permissions import IsOwnerOrReadOnly
 from .models import CustomUser
-from rest_framework import generics
 from rest_framework.views import APIView
-from rest_framework import generics
+from rest_framework import generics, permissions, status, viewsets
 from .serializers import UserCreateSerializer, LoginSerializer, UserSerializer
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
-from rest_framework import viewsets
 from accounts.permissions import IsOwnerOrReadOnly, IsAuthenticatedOrReadOnly
-
-
 # Create your views here.
 from .serializers import UserCreateSerializer, UserSerializer
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserCreateSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -40,7 +33,7 @@ class UserRegistrationView(generics.CreateAPIView):
 
     
 class LoginView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
@@ -65,7 +58,7 @@ class LoginView(APIView):
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsOwnerOrReadOnly, IsAuthenticated]
+    permission_classes = [IsOwnerOrReadOnly, permissions.IsAuthenticated]
 
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
@@ -73,7 +66,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
 # Follow and Unfollow functionality
 class FollowView(generics.GenericAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
+    permission_classes = [permissions.IsAuthenticated] # Only authenticated users can follow/unfollow                                        
 
     def post(self, request, pk):
         try:
@@ -98,7 +91,7 @@ class FollowView(generics.GenericAPIView):
 # Unfollow functionality
 class UnfollowView(generics.GenericAPIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated] # Only authenticated users can follow/unfollow                                        
+    permission_classes = [permissions.IsAuthenticated] # Only authenticated users can follow/unfollow                                        
 
     def post(self, request, pk):
         try:
